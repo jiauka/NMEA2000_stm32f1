@@ -35,7 +35,11 @@ based setup. See also NMEA2000 library.
 //#include "semphr.h"
 #include <NMEA2000.h>
 #include "stm32f1xx_hal.h"
-#define MAXELEMENTS 10
+
+#define MAXELEMENTS 5
+#define INTTX
+
+#ifdef  INTTX
 typedef struct QueueTX
 {
     int size;
@@ -43,6 +47,7 @@ typedef struct QueueTX
     int rear;
     CanTxMsgTypeDef elements[MAXELEMENTS];
 } QueueTX;
+#endif
 typedef struct QueueRX
 {
     int size;
@@ -67,7 +72,6 @@ class NMEA2000_stm32f1 : public tNMEA2000
                              unsigned char& len,
                              unsigned char* buf);
 
-    void isrTaskRun(); // Handles deferred interrupts from MCP2515
     bool SendMsg(const tN2kMsg& N2kMsg,
                  int DeviceIndex = 0); // Override super class variant
     NMEA2000_stm32f1();
@@ -78,17 +82,6 @@ class NMEA2000_stm32f1 : public tNMEA2000
     NMEA2000_stm32f1(NMEA2000_stm32f1 const&) = delete;
     void operator=(NMEA2000_stm32f1 const&) = delete;
 
-  private:
-    //    QueueHandle_t canOutQ;
-    //    QueueHandle_t canInQ;
-
-    static const uint16_t rxBufNo =
-      0; // Always only use first RX buf in MCP2515
-    static const uint16_t txBufNo =
-      0; // Always only use first TX buf in MCP2515
-    static const unsigned long N2K_Def_DevId = 25;
-
-//    SemaphoreHandle_t sendMutex;
 };
 
 #endif /* NMEA2000_stm32f1_H_ */
