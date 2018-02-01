@@ -34,33 +34,14 @@ based setup. See also NMEA2000 library.
 #define NMEA2000_stm32f1_H_
 //#include "semphr.h"
 #include <NMEA2000.h>
-#include "stm32f1xx_hal.h"
 
 #define MAXELEMENTS 5
-#define INTTX
 
-#ifdef  INTTX
-typedef struct QueueTX
-{
-    int size;
-    int front;
-    int rear;
-    CanTxMsgTypeDef elements[MAXELEMENTS];
-} QueueTX;
-#endif
-typedef struct QueueRX
-{
-    int size;
-    int front;
-    int rear;
-    CanRxMsgTypeDef elements[MAXELEMENTS];
-} QueueRX;
 class NMEA2000_stm32f1 : public tNMEA2000
 {
 
   public:
-    static NMEA2000_stm32f1& getInstance();
-
+    NMEA2000_stm32f1();
     virtual ~NMEA2000_stm32f1();
 
     virtual bool CANSendFrame(unsigned long id,
@@ -74,13 +55,8 @@ class NMEA2000_stm32f1 : public tNMEA2000
 
     bool SendMsg(const tN2kMsg& N2kMsg,
                  int DeviceIndex = 0); // Override super class variant
-    NMEA2000_stm32f1();
-
+	void InitCANFrameBuffers();
   private:
-
-    // Ensure no copies of the one and only is made
-    NMEA2000_stm32f1(NMEA2000_stm32f1 const&) = delete;
-    void operator=(NMEA2000_stm32f1 const&) = delete;
 
 };
 
