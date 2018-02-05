@@ -57,7 +57,6 @@ NMEA2000_stm32f1::~NMEA2000_stm32f1() {
 }
 
 bool NMEA2000_stm32f1::CANOpen() {
-	//	mcp.begin(CAN_250KBPS, MCP_8MHz);
 
 	return true;
 }
@@ -86,40 +85,13 @@ struct canStat {
 bool NMEA2000_stm32f1::CANSendFrame(unsigned long id, unsigned char len,
 		const unsigned char* buf, bool wait_sent) {
 	//JCB TODO    (void)wait_sent;
-#if 0
-	bool ret;
-	CanTxMsgTypeDef frametx;
-
-	frametx.IDE = CAN_ID_EXT;
-	frametx.ExtId = id;
-	frametx.DLC = len;
-	frametx.RTR = CAN_RTR_DATA;
-	//  trace_puts("[CANSendFrame] 2");
-	memcpy(frametx.Data, buf, len);
-#if 0
-	if(CAN_GetITStatus(CAN1, CAN_IT_TME) == RESET) {
-		CAN_Transmit(CAN1, &frametx);
-		CAN_ITConfig(CAN1, CAN_IT_TME, ENABLE);
-		canStat.sendCnt++;
-		CAN_ITConfig(CAN1, CAN_IT_FMP0, ENABLE);
-		return true;
-	}
-	else
-#endif
-	if (pushTX(&frametx)) {
-		__HAL_CAN_ENABLE_IT(&CanHandle, CAN_IT_TME);
-		NVIC_SetPendingIRQ(CAN1_TX_IRQn);
-	}
-
-#else
 	CanMsgTypeDef frametx;
 	frametx.id = id;
 	frametx.len = len;
 
 	for(int i = 0; i < len; i++)
 	frametx.Data[i] = buf[i];
-	return STM32F1_CAN::getInstance().write(frametx);
-#endif
+	return STM32F1_CAN::getInstance().write(frametx,wait_sent);
 }
 
 /* Realization of tNMEA2000 virtual function. Notice that this implementation
@@ -144,15 +116,13 @@ void NMEA2000_stm32f1::InitCANFrameBuffers() {
   if ( MaxCANReceiveFrames==0 ) MaxCANReceiveFrames=10; // Use default, if not set
   if ( MaxCANReceiveFrames<10 ) MaxCANReceiveFrames=10; // Do not allow less that 10 should have enough memory.
   STM32F1_CAN::getInstance().setRxBufferSize(MaxCANReceiveFrames);
+  MaxCANSendFrames=4;
 
-  if (MaxCANSendFrames<30 ) MaxCANSendFrames=30;
-  
-  uint16_t TotalFrames=MaxCANSendFrames;
-  MaxCANSendFrames=4; // we do not need libary internal buffer since driver has them.
-  uint16_t CANGlobalBufSize=TotalFrames-MaxCANSendFrames;
 
 #ifdef INTTX
-  CANbus->setNumTXBoxes(NumTxMailBoxes); 
+//TODO
+#if 0
+  CANbus->setNumTXBoxes(NumTxMailBoxes);
   
 // With this support system can have different buffers for high and low priority and fast packet messages.
 // After message has been sent to driver, it buffers it automatically and sends it by interrupt.
@@ -166,7 +136,7 @@ void NMEA2000_stm32f1::InitCANFrameBuffers() {
   CANbus->setMailBoxTxBufferSize(CANbus->getFirstTxBox(),HighPriorityBufferSize); // Highest priority buffer
   CANbus->setMailBoxTxBufferSize(CANbus->getLastTxBox(),FastPacketBufferSize); // Fastpacket buffer
   STM32F1_CAN::getInstance().setTxBufferSize(CANGlobalBufSize);
-  
+#endif
 #endif
 
   tNMEA2000::InitCANFrameBuffers(); // call main initialization
