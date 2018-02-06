@@ -40,7 +40,6 @@
 //extern "C" void canIsrTaskEntry(void* pvParameters);
 //extern "C" void USB_LP_CAN1_RX0_IRQHandler(void);
 
-
 NMEA2000_stm32f1::NMEA2000_stm32f1() :
 		tNMEA2000() {
 	SetDeviceCount(1);
@@ -85,13 +84,13 @@ struct canStat {
 bool NMEA2000_stm32f1::CANSendFrame(unsigned long id, unsigned char len,
 		const unsigned char* buf, bool wait_sent) {
 	//JCB TODO    (void)wait_sent;
-	CanMsgTypeDef frametx;
+	STM32F1_CAN::CanMsgTypeDef frametx;
 	frametx.id = id;
 	frametx.len = len;
 
-	for(int i = 0; i < len; i++)
-	frametx.Data[i] = buf[i];
-	return STM32F1_CAN::getInstance().write(frametx,wait_sent);
+	for (int i = 0; i < len; i++)
+		frametx.Data[i] = buf[i];
+	return STM32F1_CAN::getInstance().write(frametx, wait_sent);
 }
 
 /* Realization of tNMEA2000 virtual function. Notice that this implementation
@@ -99,7 +98,7 @@ bool NMEA2000_stm32f1::CANSendFrame(unsigned long id, unsigned char len,
  */
 bool NMEA2000_stm32f1::CANGetFrame(unsigned long& id, unsigned char& len,
 		unsigned char* buf) {
-	CanMsgTypeDef frame;
+	STM32F1_CAN::CanMsgTypeDef frame;
 
 	if (STM32F1_CAN::getInstance().read(frame) == true) {
 		id = frame.id;
@@ -113,33 +112,34 @@ bool NMEA2000_stm32f1::CANGetFrame(unsigned long& id, unsigned char& len,
 
 }
 void NMEA2000_stm32f1::InitCANFrameBuffers() {
-  if ( MaxCANReceiveFrames==0 ) MaxCANReceiveFrames=10; // Use default, if not set
-  if ( MaxCANReceiveFrames<10 ) MaxCANReceiveFrames=10; // Do not allow less that 10 should have enough memory.
-  STM32F1_CAN::getInstance().setRxBufferSize(MaxCANReceiveFrames);
-  MaxCANSendFrames=4;
-
+	if (MaxCANReceiveFrames == 0)
+		MaxCANReceiveFrames = 10; // Use default, if not set
+	if (MaxCANReceiveFrames < 10)
+		MaxCANReceiveFrames = 10; // Do not allow less that 10 should have enough memory.
+	STM32F1_CAN::getInstance().setRxBufferSize(MaxCANReceiveFrames);
+	MaxCANSendFrames = 4;
 
 #ifdef INTTX
 //TODO
 #if 0
-  CANbus->setNumTXBoxes(NumTxMailBoxes);
-  
+	CANbus->setNumTXBoxes(NumTxMailBoxes);
+
 // With this support system can have different buffers for high and low priority and fast packet messages.
 // After message has been sent to driver, it buffers it automatically and sends it by interrupt.
 // We may need to make these possible to set.
-  uint16_t HighPriorityBufferSize=CANGlobalBufSize / 10;
-  HighPriorityBufferSize=(HighPriorityBufferSize<15?HighPriorityBufferSize:15); // just guessing
-  CANGlobalBufSize-=HighPriorityBufferSize;
-  uint16_t FastPacketBufferSize= (CANGlobalBufSize * 9 / 10);
-  CANGlobalBufSize-=FastPacketBufferSize;
+	uint16_t HighPriorityBufferSize=CANGlobalBufSize / 10;
+	HighPriorityBufferSize=(HighPriorityBufferSize<15?HighPriorityBufferSize:15);// just guessing
+	CANGlobalBufSize-=HighPriorityBufferSize;
+	uint16_t FastPacketBufferSize= (CANGlobalBufSize * 9 / 10);
+	CANGlobalBufSize-=FastPacketBufferSize;
 
-  CANbus->setMailBoxTxBufferSize(CANbus->getFirstTxBox(),HighPriorityBufferSize); // Highest priority buffer
-  CANbus->setMailBoxTxBufferSize(CANbus->getLastTxBox(),FastPacketBufferSize); // Fastpacket buffer
-  STM32F1_CAN::getInstance().setTxBufferSize(CANGlobalBufSize);
+	CANbus->setMailBoxTxBufferSize(CANbus->getFirstTxBox(),HighPriorityBufferSize);// Highest priority buffer
+	CANbus->setMailBoxTxBufferSize(CANbus->getLastTxBox(),FastPacketBufferSize);// Fastpacket buffer
+	STM32F1_CAN::getInstance().setTxBufferSize(CANGlobalBufSize);
 #endif
 #endif
 
-  tNMEA2000::InitCANFrameBuffers(); // call main initialization
+	tNMEA2000::InitCANFrameBuffers(); // call main initialization
 }
 
 #if 0
